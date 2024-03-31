@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">ClientServer</string>
+    <string name="welcome_to_the_emoji_game">Welcome to the EMOJI GAME!</string>
+    <string name="press_to_play_d">Press to play :D</string>
+    <string name="enter_your_user">Enter your user</string>
+    <string name="questions">Questions</string>
+    <string name="send_a_new_enigma">Send a new enigma</string>
+    <string name="answer_to_your_friend">Answer to your friend</string>
+    <string name="title_activity_tab">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="go_to_tabactivity">Go to TabActivity</string>
+</resources>
