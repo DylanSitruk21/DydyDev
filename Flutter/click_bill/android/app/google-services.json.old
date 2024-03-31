@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "93425537201",
+    "project_id": "clickbill-e7229",
+    "storage_bucket": "clickbill-e7229.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93425537201:android:cde4e78b10b219473a1290",
+        "android_client_info": {
+          "package_name": "com.example.click_bill"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5ZjzT41yN6lemQ1JO_shR7liGikjwSrk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
