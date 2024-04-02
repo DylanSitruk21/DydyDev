@@ -7,7 +7,10 @@ import 'package:click_bill/my_receipt.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-void main() => runApp(MaterialApp(
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MaterialApp(
     routes: {
       '/': (context) => const Home(),
       '/generateQR': (context) => const  GenerateQR(),
@@ -15,5 +18,5 @@ void main() => runApp(MaterialApp(
       '/my_bills': (context) => const MyBills(),
       '/my_receipt': (context) => const MyReceipt(),
     },
-));
-
+  ));
+}

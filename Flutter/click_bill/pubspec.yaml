@@ -37,6 +37,8 @@ dependencies:
   path_provider: ^2.1.2
   date_field: ^4.0.1
   firebase_core: ^2.25.4
+  firebase_auth: ^4.17.8
+  google_sign_in: ^5.2.2
 
 dev_dependencies:
   flutter_test:

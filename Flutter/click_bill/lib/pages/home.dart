@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:click_bill/google_auth.dart';
 
 class Home extends StatelessWidget {
   const Home({Key? key}) : super(key: key);
@@ -21,6 +22,8 @@ class Home extends StatelessWidget {
               child: ElevatedButton.icon(
                   onPressed: () {
                     debugPrint("Create a new account");
+                    var user = signInWithGoogle();
+                    debugPrint(user.toString());
                     Navigator.pushNamed(context, '/generateQR');
                   },
                   icon: const Icon(
