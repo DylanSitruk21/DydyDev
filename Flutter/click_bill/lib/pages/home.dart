@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:click_bill/google_auth.dart';
+import 'package:click_bill/google_auth.dart' as gg;
 
 class Home extends StatelessWidget {
   const Home({Key? key}) : super(key: key);
 
+  void awaitSignIn(context) async {
+    gg.user = await gg.signInWithGoogle();
+    debugPrint(gg.user?.displayName);
+    Navigator.pushNamed(context, '/my_qr_code', arguments: {
+      'userName' : gg.user?.displayName,
+      'userMail' : gg.user?.email,
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,28 +28,14 @@ class Home extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 100, 0, 12),
               child: ElevatedButton.icon(
-                  onPressed: () {
-                    debugPrint("Create a new account");
-                    var user = signInWithGoogle();
-                    debugPrint(user.toString());
-                    Navigator.pushNamed(context, '/generateQR');
+                  onPressed: () async {
+                    debugPrint("Google sign in");
+                    awaitSignIn(context);
                   },
                   icon: const Icon(
                     Icons.create_rounded
                   ),
-                  label: const Text("Create a new account")
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton.icon(
-                  onPressed: () {
-                    debugPrint("Login");
-                  },
-                  icon: const Icon(
-                      Icons.create_rounded
-                  ),
-                  label: const Text("Log to my account")
+                  label: const Text("Sign in with Google")
               ),
             )
           ],

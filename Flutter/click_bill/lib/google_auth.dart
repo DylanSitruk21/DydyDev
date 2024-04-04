@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -19,3 +18,10 @@ Future<User?> signInWithGoogle() async {
   }
   return null;
 }
+
+Future<void> signOutWithGoogle() async {
+  await _auth.signOut();
+  await googleSignIn.signOut();
+}
+
+User? user;

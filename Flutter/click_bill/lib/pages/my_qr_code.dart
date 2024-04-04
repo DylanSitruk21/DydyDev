@@ -1,4 +1,4 @@
-// import 'dart:io';
+import 'package:click_bill/google_auth.dart' as gg;
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 // import 'package:pretty_qr_code/pretty_qr_code.dart';
@@ -24,14 +24,11 @@ class _MyQRCodeState extends State<MyQRCode> {
     });
   }
 
-  // @override
-  // Future<void> initState() async {
-  //   final server = await ServerSocket.bind('localhost', 2714);
-  //   server.listen((client) async {
-  //     await File('1.zip').openRead().pipe(client);
-  //   });
-  //   super.initState();
-  // }
+  void awaitSignOut(context) async{
+    await gg.signOutWithGoogle();
+    debugPrint("${gg.user?.displayName} is signing out");
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +42,15 @@ class _MyQRCodeState extends State<MyQRCode> {
           const Text('My QR code'),
           foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app_rounded),
+            onPressed: () {
+              debugPrint("User sign out");
+              awaitSignOut(context);
+            },
+          ),
+        ],
       ),
       body: Center(
         child: QrImageView(

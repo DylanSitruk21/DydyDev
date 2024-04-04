@@ -5,7 +5,6 @@ import 'package:click_bill/pages/my_qr_code.dart';
 import 'package:click_bill/pages/my_bills.dart';
 import 'package:click_bill/my_receipt.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

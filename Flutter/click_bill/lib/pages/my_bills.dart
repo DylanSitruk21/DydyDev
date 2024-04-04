@@ -5,6 +5,7 @@ import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:date_field/date_field.dart';
+import 'package:click_bill/google_auth.dart' as gg;
 
 class MyBills extends StatefulWidget {
   const MyBills({Key? key}) : super(key: key);
@@ -111,7 +112,10 @@ class _MyBillsState extends State<MyBills> {
       _selectedIndex = index;
       if (_selectedIndex == 0) {
         bl.bills = bills;
-        Navigator.pushReplacementNamed(context, '/my_qr_code');
+        Navigator.pushReplacementNamed(context, '/my_qr_code', arguments: {
+          'userName' : gg.user?.displayName,
+          'userMail' : gg.user?.email,
+        });
       }
     });
   }
@@ -150,6 +154,11 @@ class _MyBillsState extends State<MyBills> {
     }
   }
 
+  void awaitSignOut(context) async{
+    await gg.signOutWithGoogle();
+    debugPrint("${gg.user?.displayName} is signing out");
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +168,15 @@ class _MyBillsState extends State<MyBills> {
         title: const Text('My Bills'),
         centerTitle: true,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app_rounded),
+            onPressed: () {
+              debugPrint("User sign out");
+              awaitSignOut(context);
+            },
+          ),
+        ],
       ),
       body: bills.isEmpty ?
       const Center(
