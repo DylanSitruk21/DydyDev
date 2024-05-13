@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:click_bill/bill.dart' as bl;
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 import 'package:date_field/date_field.dart';
 import 'package:click_bill/google_auth.dart' as gg;
+import 'package:click_bill/firestore.dart' as fs;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class MyBills extends StatefulWidget {
   const MyBills({Key? key}) : super(key: key);
@@ -15,28 +16,39 @@ class MyBills extends StatefulWidget {
 }
 
 class _MyBillsState extends State<MyBills> {
-
   dynamic date;
   dynamic store;
   final storeController = TextEditingController();
-
+  bool isBillsEmpty = true;
+  int billsNumber = 0;
   List<String> _pictures = [];
-  List<bl.Bill> bills = bl.bills;
+  CollectionReference<Map<String, dynamic>> bills =
+      fs.users.doc(gg.user?.uid).collection('bills');
+  List<DocumentSnapshot<Object?>> billDocs = [];
   int _selectedIndex = 1;
+
+  void getData() async {
+    updateBillsNum();
+    await Future.delayed(const Duration(seconds: 2), () {
+      print("Bills empty: $isBillsEmpty");
+      print("Num of bills: $billsNumber");
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     storeController.addListener((updateText));
+    getData();
   }
 
-  void updateText(){
+  void updateText() {
     setState(() {
       store = storeController.text;
     });
   }
 
-  Widget billTemplate(bill) {
+  Widget billTemplate(DocumentSnapshot bill) {
     return GestureDetector(
       onTap: () => _onCardTapped(bill),
       child: Card(
@@ -47,7 +59,7 @@ class _MyBillsState extends State<MyBills> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Text(
-                  bill.shop,
+                  bill["store"].toString(),
                   style: TextStyle(
                     fontSize: 18.0,
                     color: Colors.grey[600],
@@ -58,52 +70,73 @@ class _MyBillsState extends State<MyBills> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      bill.date,
+                      bill["date"].toString(),
                       style: TextStyle(
                         fontSize: 14.0,
                         color: Colors.grey[800],
                       ),
                     ),
                     TextButton(
-                        onPressed: () =>
-                            showDialog<String>(
+                        onPressed: () => showDialog<String>(
                               context: context,
-                              builder: (BuildContext context) =>
-                                  AlertDialog(
-                                    title: const Text('Are you sure ?'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, 'Cancel'),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            bills.remove(bill);
-                                          });
-                                          Navigator.pop(context, 'Yes');
-                                        },
-                                        child: const Text('Yes'),
-                                      ),
-                                    ],
+                              builder: (BuildContext context) => AlertDialog(
+                                title: const Text('Are you sure ?'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, 'Cancel'),
+                                    child: const Text('Cancel'),
                                   ),
+                                  TextButton(
+                                    onPressed: () {
+                                      bills.doc(bill.id).delete();
+                                      fs.deletePdf(bill['pdfPath']);
+                                      updateBillsNum();
+                                      Navigator.pop(context, 'Yes');
+                                    },
+                                    child: const Text('Yes'),
+                                  ),
+                                ],
+                              ),
                             ),
-                        child: const Icon(Icons.delete, size: 20)
-                    ),
+                        child: const Icon(Icons.delete, size: 20)),
                   ],
                 ),
               ],
             ),
-          )
-      ),
+          )),
     );
   }
 
-  void _onCardTapped(bl.Bill bill) {
+  void _onCardTapped(DocumentSnapshot bill) {
     debugPrint('Open the receipt');
-    Navigator.pushNamed(context, '/my_receipt', arguments: {
-      'pdfPath': bill.pdfPath
+    Navigator.pushNamed(context, '/my_receipt',
+        arguments: {'pdfPath': bill["pdfPath"]});
+  }
+
+  Future<List<DocumentSnapshot<Object?>>> _billDocs() async {
+    final QuerySnapshot querySnapshot = await bills.get();
+    return querySnapshot.docs;
+  }
+
+  Future<bool> _isBillsEmpty() async {
+    final QuerySnapshot querySnapshot = await bills.get();
+    return querySnapshot.docs.isEmpty;
+  }
+
+  Future<int> _howManyBills() async {
+    final QuerySnapshot querySnapshot = await bills.get();
+    return querySnapshot.docs.length;
+  }
+
+  void updateBillsNum() async {
+    bool isBillsEmptyTemp = await _isBillsEmpty();
+    int billsNumberTemp = await _howManyBills();
+    List<DocumentSnapshot<Object?>> billDocsTemp = await _billDocs();
+    setState(() {
+      isBillsEmpty = isBillsEmptyTemp;
+      billsNumber = billsNumberTemp;
+      billDocs = billDocsTemp;
     });
   }
 
@@ -111,24 +144,24 @@ class _MyBillsState extends State<MyBills> {
     setState(() {
       _selectedIndex = index;
       if (_selectedIndex == 0) {
-        bl.bills = bills;
         Navigator.pushReplacementNamed(context, '/my_qr_code', arguments: {
-          'userName' : gg.user?.displayName,
-          'userMail' : gg.user?.email,
+          'userName': gg.user?.displayName,
+          'userMail': gg.user?.email,
         });
       }
     });
   }
 
   void _newBill(String store, String date) async {
+    Map<String, dynamic> newBill = {"store": 0, "date": 0, "pdfPath": 0};
     List<String> pictures;
+    final pdf = pw.Document();
     try {
       pictures = await CunningDocumentScanner.getPictures(true) ?? [];
       if (!mounted) return;
       setState(() {
         _pictures = pictures;
       });
-      final pdf = pw.Document();
       for (var picture in _pictures) {
         final image = pw.MemoryImage(
           File(picture).readAsBytesSync(),
@@ -139,22 +172,29 @@ class _MyBillsState extends State<MyBills> {
           );
         }));
       }
-      Directory appDocumentsDir = await getApplicationDocumentsDirectory();
-      final now = DateTime.now();
-      debugPrint('${appDocumentsDir.path}/$now.pdf');
-      final file = File('${appDocumentsDir.path}/$now.pdf');
-      await file.writeAsBytes(await pdf.save());
-      setState(() {
-        bills.add(bl.Bill(store, date, file.path));
-      });
       debugPrint("Scan succeed !");
     } catch (exception) {
       debugPrint(exception.toString());
       debugPrint("Scan failed ..");
     }
+    final now = DateTime.now();
+
+    Reference storageRef = FirebaseStorage.instance.ref().child('${gg.user?.displayName}/$now');
+    UploadTask uploadTask = storageRef.putData(await pdf.save());
+    TaskSnapshot taskSnapshot = await uploadTask;
+    await uploadTask.whenComplete(() => print('File uploaded successfully'));
+
+    newBill["store"] = store;
+    newBill["date"] = date;
+    newBill["pdfPath"] = '$now';
+
+    setState(() {
+      bills.doc().set(newBill);
+      updateBillsNum();
+    });
   }
 
-  void awaitSignOut(context) async{
+  void awaitSignOut(context) async {
     await gg.signOutWithGoogle();
     debugPrint("${gg.user?.displayName} is signing out");
     Navigator.pop(context);
@@ -178,13 +218,14 @@ class _MyBillsState extends State<MyBills> {
           ),
         ],
       ),
-      body: bills.isEmpty ?
-      const Center(
-          child: Text("You have no bills yet"),
-      ):
-      Column(
-        children: bills.map((bill) => billTemplate(bill)).toList()
-      ),
+      body: isBillsEmpty
+          ? const Center(
+              child: Text("You have no bills yet"),
+            )
+          : Column(
+              children: billDocs
+                  .map((DocumentSnapshot bill) => billTemplate(bill))
+                  .toList()),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
